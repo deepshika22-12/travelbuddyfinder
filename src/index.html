@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Buddy Finder</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f5f7;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #222;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .box {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px #ccc;
+        }
+
+        input {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #bbb;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #333;
+            color: white;
+        }
+
+        button:hover {
+            background: #555;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #eee;
+        }
+
+        #result {
+            white-space: pre-wrap;
+            background: #f7f7f7;
+            padding: 15px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🌍 Travel Buddy Finder</h1>
+
+    <div class="box">
+        <h2>Add Travel Buddy</h2>
+
+        <input id="buddyId" placeholder="Buddy ID">
+        <input id="name" placeholder="Name">
+        <input id="destination" placeholder="Destination">
+        <input id="age" type="number" placeholder="Age">
+        <input id="budget" type="number" placeholder="Budget">
+        <input id="tripDuration" placeholder="Trip Duration">
+        <input id="interests" placeholder="Interests">
+        <input id="status" placeholder="Status">
+
+        <br>
+
+        <button onclick="addBuddy()">Add Buddy</button>
+        <button onclick="addSamples()">Add 4 Sample Records</button>
+    </div>
+
+    <div class="box">
+        <h2>Search by Buddy ID</h2>
+
+        <input id="searchId" placeholder="Example: TB001">
+        <button onclick="searchBuddy()">Search</button>
+    </div>
+
+    <div class="box">
+        <h2>Destination + Minimum Budget</h2>
+
+        <input id="filterDestination" placeholder="Destination">
+        <input id="minBudget" type="number" placeholder="Minimum Budget">
+
+        <button onclick="filterBuddies()">Search</button>
+    </div>
+
+    <div class="box">
+        <h2>Update Destination and Budget</h2>
+
+        <input id="updateId" placeholder="Buddy ID">
+        <input id="updateDestination" placeholder="New Destination">
+        <input id="updateBudget" type="number" placeholder="New Budget">
+
+        <button onclick="updateBuddy()">Update</button>
+    </div>
+
+    <div class="box">
+        <h2>Increase Budget</h2>
+
+        <input id="increaseDestination" placeholder="Destination">
+        <input id="increaseAmount" type="number" placeholder="Amount">
+
+        <button onclick="increaseBudget()">Increase</button>
+    </div>
+
+    <div class="box">
+        <h2>Budget Range</h2>
+
+        <input id="rangeMin" type="number" placeholder="Minimum">
+        <input id="rangeMax" type="number" placeholder="Maximum">
+
+        <button onclick="budgetRange()">Search</button>
+    </div>
+
+    <div class="box">
+        <h2>Delete Travel Buddy</h2>
+
+        <input id="deleteId" placeholder="Buddy ID">
+
+        <button onclick="deleteBuddy()">Delete</button>
+    </div>
+
+    <div class="box">
+        <h2>Travel Buddy Records</h2>
+
+        <button onclick="showAll()">Show All - Budget Descending</button>
+        <button onclick="showRequiredFields()">Show Name, Destination, Budget, Duration</button>
+
+        <div id="result"></div>
+    </div>
+
+</div>
+
+<script>
+
+async function addBuddy() {
+
+    const buddy = {
+        buddyId: document.getElementById("buddyId").value,
+        name: document.getElementById("name").value,
+        destination: document.getElementById("destination").value,
+        age: Number(document.getElementById("age").value),
+        budget: Number(document.getElementById("budget").value),
+        tripDuration: document.getElementById("tripDuration").value,
+        interests: document.getElementById("interests").value,
+        status: document.getElementById("status").value
+    };
+
+    const response = await fetch("/api/buddies", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(buddy)
+    });
+
+    const data = await response.json();
+
+    document.getElementById("result").textContent =
+        JSON.stringify(data, null, 2);
+}
+
+
+async function addSamples() {
+
+    const response = await fetch("/api/seed", {
+        method: "POST"
+    });
+
+    const data = await response.json();
+
+    document.getElementById("result").textContent =
+        JSON.stringify(data, null, 2);
+
+    showAll();
+}
+
+
+async function searchBuddy() {
+
+    const id = document.getElementById("searchId").value;
+
+    const response = await fetch("/api/buddies/id/" + id);
+
+    const data = await response.json();
+
+    document.getElementById("result").textContent =
+        JSON.stringify(data, null, 2);
+}
+
+
+async function filterBuddies() {
+
+    const destination =
+        document.getElementById("filterDestination").value;
+
+    const minBudget =
+        document.getElementById("minBudget").value;
+
+    const response = await fetch(
+        "/api/buddies/filter?destination=" +
+        encodeURIComponent(destination) +
+        "&minBudget=" +
+        minBudget
+    );
+
+    const data = await response.json();
+
+    document.getElementById("result").textContent =
+        JSON.stringify(data, null, 2);
+}
+
+
+async function updateBuddy() {
+
+    const id = document.getElementById("updateId").value;
+
+    const body = {
+        destination:
+            document.getElementById("updateDestination").value,
+
+        budget:
+            Number(document.getElementById("updateBudget").value)
+    };
+
+    const response = await fetch("/api/buddies/" + id, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+
+    document.getElementById("result").textContent =
+        JSON.stringify(data, null, 2);
+}
+
+
+async function increaseBudget() {
+
+    const body = {
+        destination:
+            document.getElementById("increaseDestination").value,
+
+        amount:
+            Number(document.getElementById("increaseAmount").value)
+    };
+
+    const response = await fetch("/api/buddies/increase-budget", {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+
+    document.getElementById("result").textContent =
+        JSON.stringify(data, null, 2);
+
+    showAll();
+}
+
+
+async function budgetRange() {
+
+    const min = document.getElementById("rangeMin").value;
+    const max = document.getElementById("rangeMax").value;
+
+    const response = await fetch(
+        "/api/buddies/range?min=" + min + "&max=" + max
+    );
+
+    const data = await response.json();
+
+    document.getElementById("result").textContent =
+        JSON.stringify(data, null, 2);
+}
+
+
+async function deleteBuddy() {
+
+    const id = document.getElementById("deleteId").value;
+
+    const response = await fetch("/api/buddies/" + id, {
+        method: "DELETE"
+    });
+
+    const data = await response.json();
+
+    document.getElementById("result").textContent =
+        JSON.stringify(data, null, 2);
+
+    showAll();
+}
+
+
+async function showAll() {
+
+    const response = await fetch("/api/buddies");
+
+    const data = await response.json();
+
+    document.getElementById("result").textContent =
+        JSON.stringify(data, null, 2);
+}
+
+
+async function showRequiredFields() {
+
+    const response = await fetch("/api/buddies/display");
+
+    const data = await response.json();
+
+    document.getElementById("result").textContent =
+        JSON.stringify(data, null, 2);
+}
+
+</script>
+
+</body>
+</html>
